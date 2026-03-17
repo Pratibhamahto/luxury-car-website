@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AutoVault — Buy a Car</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#06080a;--surface:#0e1114;--white:#eef0f3;--muted:#5c6370;--accent:#e83a3a;--green:#2aaa6a;--blue:#4080e0;--border:rgba(232,58,58,0.15);--border-s:rgba(255,255,255,0.07)}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;overflow-x:hidden}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 60px;background:rgba(6,8,10,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+    .logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--white);text-decoration:none}
+    .logo span{color:var(--accent)}
+    .nav-links{display:flex;gap:32px;list-style:none}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;transition:color .3s}
+    .nav-links a:hover,.nav-links a.active{color:var(--white)}
+    .nav-actions{display:flex;gap:12px}
+    .btn-nav{padding:9px 22px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:.3s;text-decoration:none;display:inline-block}
+    .btn-sell{background:var(--accent);color:#fff}.btn-sell:hover{background:#c42d2d}
+    .btn-buy{background:transparent;border:1px solid var(--border);color:var(--white)}.btn-buy:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* PAGE HERO */
+    .page-hero{padding:130px 60px 70px;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+    .page-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(232,58,58,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(232,58,58,.025) 1px,transparent 1px);background-size:70px 70px}
+    .hero-glow{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(232,58,58,.08) 0%,transparent 68%);right:-60px;top:50%;transform:translateY(-50%);pointer-events:none}
+    .page-hero-inner{position:relative;z-index:2}
+    .breadcrumb{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+    .breadcrumb span{color:var(--accent)}
+    .page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,8vw,100px);line-height:.92;letter-spacing:2px;margin-bottom:20px;opacity:0;animation:up .7s .2s ease forwards}
+    .page-title span{color:var(--accent)}
+    .page-sub{font-size:15px;line-height:1.75;color:var(--muted);max-width:500px;opacity:0;animation:up .7s .4s ease forwards}
+    @keyframes up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+    /* FILTER + RESULTS LAYOUT */
+    .main-layout{display:grid;grid-template-columns:280px 1fr;gap:0;min-height:60vh}
+
+    /* SIDEBAR FILTER */
+    .filter-sidebar{border-right:1px solid var(--border);padding:40px 32px;position:sticky;top:70px;height:calc(100vh - 70px);overflow-y:auto}
+    .filter-sidebar::-webkit-scrollbar{width:4px}
+    .filter-sidebar::-webkit-scrollbar-track{background:transparent}
+    .filter-sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    .filter-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:center}
+    .filter-reset{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;background:none;border:none}
+    .filter-group{margin-bottom:30px;padding-bottom:30px;border-bottom:1px solid var(--border-s)}
+    .filter-group:last-child{border-bottom:none}
+    .filter-group-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .filter-options{display:flex;flex-direction:column;gap:10px}
+    .filter-check{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--muted);transition:color .3s}
+    .filter-check:hover{color:var(--white)}
+    .filter-check input{width:14px;height:14px;accent-color:var(--accent);cursor:pointer}
+    .filter-check input:checked + span{color:var(--white)}
+    .price-range{margin-top:10px}
+    .range-input{width:100%;accent-color:var(--accent);cursor:pointer;margin-top:8px}
+    .range-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
+
+    /* RESULTS AREA */
+    .results-area{padding:32px 40px}
+    .results-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:14px}
+    .results-count{font-size:13px;color:var(--muted)}
+    .results-count strong{color:var(--white);font-weight:500}
+    .sort-row{display:flex;align-items:center;gap:10px}
+    .sort-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+    .sort-select{background:var(--surface);border:1px solid var(--border-s);color:var(--white);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 14px;outline:none;-webkit-appearance:none;cursor:pointer}
+    .sort-select option{background:var(--surface)}
+
+    /* VIEW TOGGLE */
+    .view-toggle{display:flex;gap:4px}
+    .v-btn{background:transparent;border:1px solid var(--border-s);color:var(--muted);width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:border-color .3s,color .3s}
+    .v-btn.active{border-color:var(--accent);color:var(--accent)}
+
+    /* CAR GRID */
+    .cars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border)}
+    .cars-grid.list-view{grid-template-columns:1fr}
+
+    .car-card{background:var(--surface);overflow:hidden;transition:transform .35s;cursor:pointer}
+    .car-card:hover{transform:translateY(-4px);z-index:2}
+    .card-img{height:200px;background:linear-gradient(160deg,#0e0a08,#181410);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .card-img svg{width:80%;transition:transform .5s}
+    .car-card:hover .card-img svg{transform:scale(1.05)}
+    .card-badge{position:absolute;top:12px;left:12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;font-weight:500}
+    .badge-new{background:var(--accent);color:#fff}
+    .badge-certified{background:#0f3a2a;border:1px solid var(--green);color:var(--green)}
+    .badge-ev{background:#0a1830;border:1px solid var(--blue);color:var(--blue)}
+    .badge-hot{background:#3a2000;border:1px solid #f0a500;color:#f0a500}
+    .card-fav{position:absolute;top:12px;right:12px;background:rgba(6,8,10,.7);border:1px solid var(--border-s);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:background .3s}
+    .card-fav:hover{background:rgba(232,58,58,.2)}
+    .card-body{padding:20px 22px}
+    .card-brand{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+    .card-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;margin-bottom:12px}
+    .card-specs{display:flex;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border-s);margin-bottom:14px;flex-wrap:wrap}
+    .sp-v{font-size:12px;font-weight:500}
+    .sp-k{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+    .card-foot{display:flex;justify-content:space-between;align-items:center}
+    .price{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent)}
+    .price small{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);margin-left:3px}
+    .btn-card{background:transparent;border:1px solid var(--border-s);color:var(--white);padding:7px 16px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:border-color .3s,background .3s,color .3s}
+    .btn-card:hover{border-color:var(--accent);background:var(--accent);color:#fff}
+
+    /* LIST VIEW CARD */
+    .cars-grid.list-view .car-card{display:grid;grid-template-columns:260px 1fr}
+    .cars-grid.list-view .card-img{height:100%;min-height:170px}
+    .cars-grid.list-view .card-body{display:flex;flex-direction:column;justify-content:space-between;padding:24px 28px}
+
+    /* PAGINATION */
+    .pagination{display:flex;justify-content:center;align-items:center;gap:6px;padding:48px 0 0}
+    .pg-btn{background:transparent;border:1px solid var(--border-s);color:var(--muted);width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;transition:border-color .3s,color .3s}
+    .pg-btn:hover,.pg-btn.active{border-color:var(--accent);color:var(--accent)}
+    .pg-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+    /* CTA BAND */
+    .cta-band{background:var(--accent);padding:80px 60px;display:flex;justify-content:space-between;align-items:center}
+    .cta-band h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,60px);color:#fff;line-height:1}
+    .cta-band p{font-size:14px;color:rgba(255,255,255,.6);margin-top:8px}
+    .btn-white{background:#fff;color:var(--accent);border:none;padding:16px 44px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block;transition:background .3s}
+    .btn-white:hover{background:#f0ece4}
+
+    /* FOOTER */
+    footer{border-top:1px solid var(--border)}
+    .foot-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:60px;padding:70px 60px}
+    .foot-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--white);display:block;margin-bottom:14px}
+    .foot-logo span{color:var(--accent)}
+    .foot-desc{font-size:13px;line-height:1.75;color:var(--muted);max-width:260px}
+    .foot-col h5{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--white);margin-bottom:18px}
+    .foot-col ul{list-style:none}
+    .foot-col li+li{margin-top:10px}
+    .foot-col a{color:var(--muted);text-decoration:none;font-size:13px;transition:color .3s}
+    .foot-col a:hover{color:var(--accent)}
+    .foot-bottom{display:flex;justify-content:space-between;align-items:center;padding:22px 60px;border-top:1px solid var(--border)}
+    .foot-bottom p{font-size:11px;color:var(--muted)}
+
+    /* REVEAL */
+    .reveal{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}
+    .reveal.on{opacity:1;transform:none}
+
+    @media(max-width:1100px){.main-layout{grid-template-columns:240px 1fr}.cars-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:900px){.main-layout{grid-template-columns:1fr}.filter-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}.cars-grid.list-view .car-card{grid-template-columns:1fr}}
+    @media(max-width:640px){nav{padding:16px 24px}.nav-links,.nav-actions{display:none}.page-hero{padding:110px 24px 50px}.results-area{padding:24px}.cars-grid{grid-template-columns:1fr}.cta-band{flex-direction:column;gap:28px;padding:60px 24px}.foot-top{grid-template-columns:1fr;padding:50px 24px;gap:36px}.foot-bottom{flex-direction:column;gap:10px;padding:20px 24px;text-align:center}}
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">AUTO<span>VAULT</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="buy.html" class="active">Buy</a></li>
+    <li><a href="sell.html">Sell</a></li>
+    <li><a href="rent.html">Rent</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="sell.html" class="btn-nav btn-sell">Sell My Car</a>
+    <a href="buy.html" class="btn-nav btn-buy">Browse Cars</a>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="hero-glow"></div>
+  <div class="page-hero-inner">
+    <p class="breadcrumb">Home &nbsp;/&nbsp; <span>Buy a Car</span></p>
+    <h1 class="page-title">FIND YOUR<br><span>PERFECT CAR.</span></h1>
+    <p class="page-sub">12,000+ certified, inspected cars from trusted sellers across India. Filter by brand, budget, fuel type and more.</p>
+  </div>
+</section>
+
+<!-- MAIN LAYOUT -->
+<div class="main-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="filter-sidebar">
+    <div class="filter-title">
+      Filters
+      <button class="filter-reset">Reset All</button>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Category</div>
+      <div class="filter-options">
+        <label class="filter-check"><input type="checkbox" checked/><span>All Cars</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Hatchback</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Sedan</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>SUV / MUV</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Luxury</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Electric</span></label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Brand</div>
+      <div class="filter-options">
+        <label class="filter-check"><input type="checkbox"/><span>Maruti Suzuki</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Hyundai</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Honda</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Toyota</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Tata</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Mahindra</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>BMW</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Mercedes-Benz</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Audi</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Kia</span></label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Budget</div>
+      <div class="price-range">
+        <input type="range" class="range-input" min="0" max="100" value="60" id="priceRange" oninput="document.getElementById('priceVal').textContent='₹'+this.value+'L'"/>
+        <div class="range-labels"><span>₹0</span><span id="priceVal">₹60L</span><span>₹1Cr+</span></div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Fuel Type</div>
+      <div class="filter-options">
+        <label class="filter-check"><input type="checkbox"/><span>Petrol</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Diesel</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>CNG</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Electric</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Hybrid</span></label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Transmission</div>
+      <div class="filter-options">
+        <label class="filter-check"><input type="checkbox"/><span>Manual</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Automatic</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>AMT</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>CVT</span></label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Year</div>
+      <div class="filter-options">
+        <label class="filter-check"><input type="checkbox"/><span>2024 – 2025</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>2022 – 2023</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>2020 – 2021</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Before 2020</span></label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">City</div>
+      <div class="filter-options">
+        <label class="filter-check"><input type="checkbox"/><span>Mumbai</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Delhi</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Bengaluru</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Hyderabad</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Chennai</span></label>
+        <label class="filter-check"><input type="checkbox"/><span>Pune</span></label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RESULTS -->
+  <div class="results-area">
+    <div class="results-bar reveal">
+      <p class="results-count">Showing <strong>1–9</strong> of <strong>12,482</strong> cars</p>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div class="sort-row">
+          <span class="sort-label">Sort:</span>
+          <select class="sort-select">
+            <option>Relevance</option>
+            <option>Price: Low to High</option>
+            <option>Price: High to Low</option>
+            <option>Newest First</option>
+            <option>Lowest KM</option>
+          </select>
+        </div>
+        <div class="view-toggle">
+          <button class="v-btn active" id="gridBtn" onclick="setView('grid')">⊞</button>
+          <button class="v-btn" id="listBtn" onclick="setView('list')">☰</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cars-grid reveal" id="carsGrid">
+
+      <!-- Card 1 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-hot">🔥 Hot Deal</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 112 Q36 112 52 100 Q84 70 136 58 Q178 46 228 44 Q278 42 316 52 Q352 60 376 80 Q392 92 398 108" fill="#1a0e0e" stroke="#e83a3a" stroke-width="1.2"/>
+            <path d="M130 100 Q148 62 192 52 Q228 44 264 44 Q300 44 323 56 Q345 67 354 88" fill="#120808" stroke="#e83a3a" stroke-width="1"/>
+            <path d="M38 100 Q64 80 98 80 Q132 80 148 112" fill="#080404" stroke="#e83a3a" stroke-width="1.2"/>
+            <path d="M286 112 Q308 80 340 80 Q370 80 385 112" fill="#080404" stroke="#e83a3a" stroke-width="1.2"/>
+            <circle cx="92" cy="120" r="22" fill="#0c0808" stroke="#e83a3a" stroke-width="1.2"/><circle cx="92" cy="120" r="13" fill="#140c0c" stroke="rgba(232,58,58,.45)" stroke-width="0.8"/><circle cx="92" cy="120" r="4" fill="#e83a3a"/>
+            <circle cx="350" cy="120" r="22" fill="#0c0808" stroke="#e83a3a" stroke-width="1.2"/><circle cx="350" cy="120" r="13" fill="#140c0c" stroke="rgba(232,58,58,.45)" stroke-width="0.8"/><circle cx="350" cy="120" r="4" fill="#e83a3a"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">Hyundai</div>
+          <div class="card-name">Creta 1.5 SX — 2023</div>
+          <div class="card-specs">
+            <div><div class="sp-v">1.5L</div><div class="sp-k">Engine</div></div>
+            <div><div class="sp-v">Petrol</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">22,400 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">Auto</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹14.5L <small>Mumbai</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-certified">✓ Certified</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 115 Q36 115 52 103 Q82 74 134 62 Q176 50 226 48 Q278 46 318 56 Q355 65 378 84 Q394 96 400 112" fill="#0a1020" stroke="#4080e0" stroke-width="1.2"/>
+            <path d="M128 103 Q145 64 188 54 Q224 44 262 44 Q300 44 324 56 Q346 67 355 90" fill="#080c18" stroke="#4080e0" stroke-width="1"/>
+            <path d="M36 103 Q62 82 96 82 Q130 82 146 115" fill="#060810" stroke="#4080e0" stroke-width="1.2"/>
+            <path d="M288 115 Q310 82 342 82 Q373 82 388 115" fill="#060810" stroke="#4080e0" stroke-width="1.2"/>
+            <circle cx="90" cy="123" r="22" fill="#0a0c14" stroke="#4080e0" stroke-width="1.2"/><circle cx="90" cy="123" r="13" fill="#10141e" stroke="rgba(64,128,224,.4)" stroke-width="0.8"/><circle cx="90" cy="123" r="4" fill="#4080e0"/>
+            <circle cx="352" cy="123" r="22" fill="#0a0c14" stroke="#4080e0" stroke-width="1.2"/><circle cx="352" cy="123" r="13" fill="#10141e" stroke="rgba(64,128,224,.4)" stroke-width="0.8"/><circle cx="352" cy="123" r="4" fill="#4080e0"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">Maruti Suzuki</div>
+          <div class="card-name">Baleno Alpha — 2023</div>
+          <div class="card-specs">
+            <div><div class="sp-v">1.2L</div><div class="sp-k">Engine</div></div>
+            <div><div class="sp-v">Petrol</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">14,200 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">Manual</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹8.9L <small>Delhi</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-ev">⚡ Electric</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 114 Q38 114 54 102 Q86 74 136 62 Q178 50 228 48 Q280 46 318 56 Q354 65 376 84 Q393 96 399 112" fill="#0a1810" stroke="#2aaa6a" stroke-width="1.2"/>
+            <path d="M130 102 Q148 63 190 52 Q226 43 264 43 Q302 43 325 56 Q347 67 356 90" fill="#081210" stroke="#2aaa6a" stroke-width="1"/>
+            <path d="M37 102 Q63 81 98 81 Q132 81 148 114" fill="#060e08" stroke="#2aaa6a" stroke-width="1.2"/>
+            <path d="M288 114 Q310 81 342 81 Q374 81 388 114" fill="#060e08" stroke="#2aaa6a" stroke-width="1.2"/>
+            <circle cx="91" cy="122" r="22" fill="#0a1208" stroke="#2aaa6a" stroke-width="1.2"/><circle cx="91" cy="122" r="13" fill="#101a10" stroke="rgba(42,170,106,.4)" stroke-width="0.8"/><circle cx="91" cy="122" r="4" fill="#2aaa6a"/>
+            <circle cx="352" cy="122" r="22" fill="#0a1208" stroke="#2aaa6a" stroke-width="1.2"/><circle cx="352" cy="122" r="13" fill="#101a10" stroke="rgba(42,170,106,.4)" stroke-width="0.8"/><circle cx="352" cy="122" r="4" fill="#2aaa6a"/>
+            <path d="M203 22 L194 37 L202 37 L192 54 L208 37 L200 37 Z" fill="rgba(42,170,106,0.3)" stroke="rgba(42,170,106,0.5)" stroke-width="0.6"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">Tata</div>
+          <div class="card-name">Nexon EV Max — 2023</div>
+          <div class="card-specs">
+            <div><div class="sp-v">437 km</div><div class="sp-k">Range</div></div>
+            <div><div class="sp-v">Electric</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">18,000 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">Auto</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹16.8L <small>Bengaluru</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-certified">✓ Certified</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 118 Q40 118 56 106 Q80 82 130 68 Q172 56 228 54 Q284 52 326 62 Q362 70 384 88 Q398 100 402 116" fill="#181410" stroke="#a07848" stroke-width="1.2"/>
+            <path d="M126 106 Q136 62 192 52 Q232 46 270 46 Q310 46 334 58 Q356 70 362 94" fill="#120e0a" stroke="#a07848" stroke-width="1"/>
+            <path d="M40 106 Q66 84 104 84 Q140 84 156 118" fill="#0a0806" stroke="#a07848" stroke-width="1.2"/>
+            <path d="M292 118 Q314 84 350 84 Q384 84 398 118" fill="#0a0806" stroke="#a07848" stroke-width="1.2"/>
+            <circle cx="97" cy="126" r="24" fill="#0e0a08" stroke="#a07848" stroke-width="1.2"/><circle cx="97" cy="126" r="15" fill="#141008" stroke="rgba(160,120,72,.45)" stroke-width="0.8"/><circle cx="97" cy="126" r="5" fill="#a07848"/>
+            <circle cx="358" cy="126" r="24" fill="#0e0a08" stroke="#a07848" stroke-width="1.2"/><circle cx="358" cy="126" r="15" fill="#141008" stroke="rgba(160,120,72,.45)" stroke-width="0.8"/><circle cx="358" cy="126" r="5" fill="#a07848"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">Toyota</div>
+          <div class="card-name">Fortuner 4x4 — 2022</div>
+          <div class="card-specs">
+            <div><div class="sp-v">2.8L</div><div class="sp-k">Engine</div></div>
+            <div><div class="sp-v">Diesel</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">38,000 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">Auto</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹38.5L <small>Pune</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-new">New</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 112 Q36 112 52 100 Q84 70 136 58 Q178 46 228 44 Q278 42 316 52 Q352 60 376 80 Q392 92 398 108" fill="#0e1018" stroke="#6090d8" stroke-width="1.2"/>
+            <path d="M130 100 Q148 62 192 52 Q228 44 264 44 Q300 44 323 56 Q345 67 354 88" fill="#080a14" stroke="#6090d8" stroke-width="1"/>
+            <path d="M38 100 Q64 80 98 80 Q132 80 148 112" fill="#06080e" stroke="#6090d8" stroke-width="1.2"/>
+            <path d="M286 112 Q308 80 340 80 Q370 80 385 112" fill="#06080e" stroke="#6090d8" stroke-width="1.2"/>
+            <circle cx="92" cy="120" r="22" fill="#0a0c14" stroke="#6090d8" stroke-width="1.2"/><circle cx="92" cy="120" r="13" fill="#0e1018" stroke="rgba(96,144,216,.4)" stroke-width="0.8"/><circle cx="92" cy="120" r="4" fill="#6090d8"/>
+            <circle cx="350" cy="120" r="22" fill="#0a0c14" stroke="#6090d8" stroke-width="1.2"/><circle cx="350" cy="120" r="13" fill="#0e1018" stroke="rgba(96,144,216,.4)" stroke-width="0.8"/><circle cx="350" cy="120" r="4" fill="#6090d8"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">Honda</div>
+          <div class="card-name">City ZX CVT — 2024</div>
+          <div class="card-specs">
+            <div><div class="sp-v">1.5L</div><div class="sp-k">Engine</div></div>
+            <div><div class="sp-v">Petrol</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">5,200 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">CVT</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹15.2L <small>Hyderabad</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-hot">🔥 Hot Deal</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 116 Q30 116 48 100 Q82 68 136 56 Q178 44 232 43 Q286 42 324 52 Q362 62 385 84 Q400 98 404 114" fill="#1a1600" stroke="#d4a800" stroke-width="1.2"/>
+            <path d="M132 100 Q148 58 196 48 Q234 39 272 39 Q312 40 336 53 Q360 66 368 92" fill="#120e00" stroke="#d4a800" stroke-width="1"/>
+            <path d="M32 100 Q60 76 98 76 Q136 76 152 116" fill="#080600" stroke="#d4a800" stroke-width="1.2"/>
+            <path d="M288 116 Q312 76 348 76 Q382 76 398 116" fill="#080600" stroke="#d4a800" stroke-width="1.2"/>
+            <circle cx="93" cy="124" r="22" fill="#0e0c00" stroke="#d4a800" stroke-width="1.2"/><circle cx="93" cy="124" r="13" fill="#161200" stroke="rgba(212,168,0,.45)" stroke-width="0.8"/><circle cx="93" cy="124" r="4" fill="#d4a800"/>
+            <circle cx="358" cy="124" r="22" fill="#0e0c00" stroke="#d4a800" stroke-width="1.2"/><circle cx="358" cy="124" r="13" fill="#161200" stroke="rgba(212,168,0,.45)" stroke-width="0.8"/><circle cx="358" cy="124" r="4" fill="#d4a800"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">Mahindra</div>
+          <div class="card-name">XUV700 AX7 — 2023</div>
+          <div class="card-specs">
+            <div><div class="sp-v">2.2L</div><div class="sp-k">Engine</div></div>
+            <div><div class="sp-v">Diesel</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">28,000 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">Auto</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹22.4L <small>Chennai</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+      <!-- Card 7 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-certified">✓ Certified</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 112 Q36 112 52 100 Q84 70 136 58 Q178 46 228 44 Q278 42 316 52 Q352 60 376 80 Q392 92 398 108" fill="#1a0e0e" stroke="#e83a3a" stroke-width="1.2"/>
+            <path d="M130 100 Q148 62 192 52 Q228 44 264 44 Q300 44 323 56 Q345 67 354 88" fill="#120808" stroke="#e83a3a" stroke-width="1"/>
+            <path d="M38 100 Q64 80 98 80 Q132 80 148 112" fill="#080404" stroke="#e83a3a" stroke-width="1.2"/>
+            <path d="M286 112 Q308 80 340 80 Q370 80 385 112" fill="#080404" stroke="#e83a3a" stroke-width="1.2"/>
+            <circle cx="92" cy="120" r="22" fill="#0c0808" stroke="#e83a3a" stroke-width="1.2"/><circle cx="92" cy="120" r="13" fill="#140c0c" stroke="rgba(232,58,58,.45)" stroke-width="0.8"/><circle cx="92" cy="120" r="4" fill="#e83a3a"/>
+            <circle cx="350" cy="120" r="22" fill="#0c0808" stroke="#e83a3a" stroke-width="1.2"/><circle cx="350" cy="120" r="13" fill="#140c0c" stroke="rgba(232,58,58,.45)" stroke-width="0.8"/><circle cx="350" cy="120" r="4" fill="#e83a3a"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">Kia</div>
+          <div class="card-name">Seltos HTX+ — 2022</div>
+          <div class="card-specs">
+            <div><div class="sp-v">1.4L</div><div class="sp-k">Engine</div></div>
+            <div><div class="sp-v">Petrol</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">31,000 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">DCT</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹17.1L <small>Mumbai</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+      <!-- Card 8 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-ev">⚡ Electric</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 114 Q38 114 54 102 Q86 74 136 62 Q178 50 228 48 Q280 46 318 56 Q354 65 376 84 Q393 96 399 112" fill="#101a14" stroke="#3aaa6a" stroke-width="1.2"/>
+            <path d="M130 102 Q148 63 190 52 Q226 43 264 43 Q302 43 325 56 Q347 67 356 90" fill="#0a1210" stroke="#3aaa6a" stroke-width="1"/>
+            <path d="M37 102 Q63 81 98 81 Q132 81 148 114" fill="#060e08" stroke="#3aaa6a" stroke-width="1.2"/>
+            <path d="M288 114 Q310 81 342 81 Q374 81 388 114" fill="#060e08" stroke="#3aaa6a" stroke-width="1.2"/>
+            <circle cx="91" cy="122" r="22" fill="#0a120c" stroke="#3aaa6a" stroke-width="1.2"/><circle cx="91" cy="122" r="13" fill="#101a14" stroke="rgba(58,170,106,.4)" stroke-width="0.8"/><circle cx="91" cy="122" r="4" fill="#3aaa6a"/>
+            <circle cx="352" cy="122" r="22" fill="#0a120c" stroke="#3aaa6a" stroke-width="1.2"/><circle cx="352" cy="122" r="13" fill="#101a14" stroke="rgba(58,170,106,.4)" stroke-width="0.8"/><circle cx="352" cy="122" r="4" fill="#3aaa6a"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">MG</div>
+          <div class="card-name">ZS EV Exclusive — 2023</div>
+          <div class="card-specs">
+            <div><div class="sp-v">461 km</div><div class="sp-k">Range</div></div>
+            <div><div class="sp-v">Electric</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">12,000 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">Auto</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹22.5L <small>Delhi</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+      <!-- Card 9 -->
+      <div class="car-card">
+        <div class="card-img">
+          <div class="card-badge badge-certified">✓ Certified</div>
+          <div class="card-fav">♡</div>
+          <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 115 Q36 115 52 103 Q82 74 134 62 Q176 50 226 48 Q278 46 318 56 Q355 65 378 84 Q394 96 400 112" fill="#161616" stroke="#aaa" stroke-width="1.2"/>
+            <path d="M128 103 Q145 64 188 54 Q224 44 262 44 Q300 44 324 56 Q346 67 355 90" fill="#0e0e0e" stroke="#aaa" stroke-width="1"/>
+            <path d="M36 103 Q62 82 96 82 Q130 82 146 115" fill="#080808" stroke="#aaa" stroke-width="1.2"/>
+            <path d="M288 115 Q310 82 342 82 Q373 82 388 115" fill="#080808" stroke="#aaa" stroke-width="1.2"/>
+            <circle cx="90" cy="123" r="22" fill="#0c0c0c" stroke="#aaa" stroke-width="1.2"/><circle cx="90" cy="123" r="13" fill="#161616" stroke="rgba(180,180,180,.35)" stroke-width="0.8"/><circle cx="90" cy="123" r="4" fill="#bbb"/>
+            <circle cx="352" cy="123" r="22" fill="#0c0c0c" stroke="#aaa" stroke-width="1.2"/><circle cx="352" cy="123" r="13" fill="#161616" stroke="rgba(180,180,180,.35)" stroke-width="0.8"/><circle cx="352" cy="123" r="4" fill="#bbb"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">Mercedes-Benz</div>
+          <div class="card-name">C-Class C200 — 2022</div>
+          <div class="card-specs">
+            <div><div class="sp-v">2.0L</div><div class="sp-k">Engine</div></div>
+            <div><div class="sp-v">Petrol</div><div class="sp-k">Fuel</div></div>
+            <div><div class="sp-v">19,000 km</div><div class="sp-k">Driven</div></div>
+            <div><div class="sp-v">Auto</div><div class="sp-k">Trans</div></div>
+          </div>
+          <div class="card-foot"><div class="price">₹44.9L <small>Bengaluru</small></div><button class="btn-card">View Details</button></div>
+        </div>
+      </div>
+
+    </div><!-- /cars-grid -->
+
+    <!-- PAGINATION -->
+    <div class="pagination reveal">
+      <button class="pg-btn">‹</button>
+      <button class="pg-btn active">1</button>
+      <button class="pg-btn">2</button>
+      <button class="pg-btn">3</button>
+      <button class="pg-btn">4</button>
+      <button class="pg-btn">5</button>
+      <button class="pg-btn">…</button>
+      <button class="pg-btn">139</button>
+      <button class="pg-btn">›</button>
+    </div>
+
+  </div><!-- /results-area -->
+</div><!-- /main-layout -->
+
+<!-- CTA -->
+<div class="cta-band reveal">
+  <div><h2>CAN'T FIND WHAT YOU WANT?</h2><p>Tell us your requirements and we'll find it for you.</p></div>
+  <a href="contact.html" class="btn-white">Talk to Our Team →</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-top">
+    <div><span class="foot-logo">AUTO<span>VAULT</span></span><p class="foot-desc">India's most trusted platform to buy, sell, and rent cars. Transparent, fast, and 100% hassle-free.</p></div>
+    <div class="foot-col"><h5>Explore</h5><ul><li><a href="buy.html">Buy a Car</a></li><li><a href="sell.html">Sell Your Car</a></li><li><a href="rent.html">Rent a Car</a></li><li><a href="#">Car Loans</a></li><li><a href="#">Insurance</a></li></ul></div>
+    <div class="foot-col"><h5>Company</h5><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="#">Careers</a></li><li><a href="#">Blog</a></li><li><a href="#">Press</a></li></ul></div>
+    <div class="foot-col"><h5>Support</h5><ul><li><a href="#">Help Centre</a></li><li><a href="#">RC Transfer Guide</a></li><li><a href="#">Loan Calculator</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><p>© 2025 AutoVault India Pvt. Ltd. All rights reserved.</p><p>Made with ♥ in India</p></div>
+</footer>
+
+<script>
+  function setView(type){
+    const grid=document.getElementById('carsGrid');
+    const gBtn=document.getElementById('gridBtn');
+    const lBtn=document.getElementById('listBtn');
+    if(type==='list'){grid.classList.add('list-view');lBtn.classList.add('active');gBtn.classList.remove('active');}
+    else{grid.classList.remove('list-view');gBtn.classList.add('active');lBtn.classList.remove('active');}
+  }
+  const io=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('on'),i*80);io.unobserve(e.target);}});},{threshold:.08});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Favourite toggle
+  document.querySelectorAll('.card-fav').forEach(btn=>{
+    btn.addEventListener('click',e=>{e.stopPropagation();btn.textContent=btn.textContent==='♡'?'♥':'♡';btn.style.color=btn.textContent==='♥'?'#e83a3a':'';});
+  });
+</script>
+</body>
+</html>
