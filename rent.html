@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AutoVault — Rent a Car</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#06080a;--surface:#0e1114;--white:#eef0f3;--muted:#5c6370;
+      --accent:#2aaa6a;--red:#e83a3a;--border:rgba(42,170,106,0.18);--bs:rgba(255,255,255,0.06);
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;overflow-x:hidden}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 60px;background:rgba(6,8,10,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+    .logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--white);text-decoration:none}
+    .logo span{color:#e83a3a}
+    .nav-links{display:flex;gap:32px;list-style:none}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;transition:color .3s}
+    .nav-links a:hover,.nav-links a.active{color:var(--white)}
+    .nav-actions{display:flex;gap:12px}
+    .btn-nav{padding:9px 22px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:.3s;text-decoration:none;display:inline-block}
+    .btn-rent{background:var(--accent);color:#fff}.btn-rent:hover{background:#1e8a54}
+    .btn-buy{background:transparent;border:1px solid var(--border);color:var(--white)}.btn-buy:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* HERO */
+    .page-hero{padding:130px 60px 0;position:relative;overflow:hidden}
+    .page-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(42,170,106,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(42,170,106,.025) 1px,transparent 1px);background-size:70px 70px}
+    .hero-glow{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(42,170,106,.09) 0%,transparent 68%);right:-80px;top:50%;transform:translateY(-50%);pointer-events:none}
+    .hero-inner{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:end;padding-bottom:0}
+    .breadcrumb{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+    .breadcrumb span{color:var(--accent)}
+    .page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(60px,8.5vw,116px);line-height:.88;letter-spacing:2px;margin-bottom:24px;opacity:0;animation:up .7s .2s ease forwards}
+    .page-title span{color:var(--accent)}
+    .page-sub{font-size:15px;line-height:1.8;color:var(--muted);margin-bottom:36px;opacity:0;animation:up .7s .4s ease forwards}
+    .hero-tags{display:flex;gap:10px;flex-wrap:wrap;opacity:0;animation:up .7s .6s ease forwards}
+    .tag{background:rgba(42,170,106,.1);border:1px solid rgba(42,170,106,.25);color:var(--accent);padding:6px 14px;font-size:11px;letter-spacing:2px;text-transform:uppercase}
+
+    /* Search / booking bar */
+    .booking-bar{background:var(--surface);border:1px solid var(--border);padding:28px 32px;position:relative;z-index:2;opacity:0;animation:up .7s .5s ease forwards}
+    .bb-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:20px;color:var(--accent)}
+    .bb-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+    .bb-field label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px}
+    .bb-field select,.bb-field input{width:100%;background:var(--bg);border:1px solid var(--bs);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 14px;outline:none;transition:border-color .3s;-webkit-appearance:none}
+    .bb-field select:focus,.bb-field input:focus{border-color:var(--accent)}
+    .bb-field select option{background:var(--surface)}
+    .bb-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:14px;align-items:flex-end}
+    .btn-search{background:var(--accent);color:#fff;border:none;padding:12px 32px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .3s;height:42px}
+    .btn-search:hover{background:#1e8a54}
+
+    /* Car on road SVG visual */
+    .hero-visual{position:relative;display:flex;align-items:flex-end;justify-content:center;padding-bottom:0;opacity:0;animation:up .8s .7s ease forwards}
+    .hero-visual svg{width:100%;max-width:500px;filter:drop-shadow(0 20px 50px rgba(42,170,106,.15))}
+
+    @keyframes up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+    /* STATS STRIP */
+    .stats-strip{display:flex;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .sstat{flex:1;padding:22px 60px;border-right:1px solid var(--border);display:flex;align-items:center;gap:16px}
+    .sstat:last-child{border-right:none}
+    .sstat-icon{font-size:22px}
+    .sstat-n{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);letter-spacing:1px}
+    .sstat-l{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+
+    /* SECTIONS */
+    .sec{padding:100px 60px}
+    .sec-alt{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .eyebrow{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+    .sec-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(34px,4.5vw,56px);letter-spacing:1px;line-height:1}
+    .sec-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:50px}
+    .sec-link{color:var(--muted);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px;transition:color .3s,gap .3s}
+    .sec-link::after{content:'→'}
+    .sec-link:hover{color:var(--accent);gap:14px}
+
+    /* CATEGORY TABS */
+    .cat-tabs{display:flex;gap:0;margin-bottom:40px;border-bottom:1px solid var(--border)}
+    .cat-tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:14px 28px;cursor:pointer;transition:color .3s,border-color .3s;margin-bottom:-1px}
+    .cat-tab:hover{color:var(--white)}
+    .cat-tab.active{color:var(--accent);border-color:var(--accent)}
+
+    /* RENTAL CARDS */
+    .rent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border)}
+    .rent-card{background:var(--surface);overflow:hidden;transition:transform .35s;cursor:pointer}
+    .rent-card:hover{transform:translateY(-5px);z-index:2}
+    .rc-img{height:200px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .rc-img svg{width:82%;transition:transform .5s}
+    .rent-card:hover .rc-img svg{transform:scale(1.05)}
+    .rc-badge{position:absolute;top:12px;left:12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;font-weight:500}
+    .rc-badge-budget{background:rgba(42,170,106,.2);border:1px solid var(--accent);color:var(--accent)}
+    .rc-badge-suv{background:rgba(240,165,0,.15);border:1px solid #f0a500;color:#f0a500}
+    .rc-badge-luxury{background:rgba(200,168,76,.15);border:1px solid #c9a84c;color:#c9a84c}
+    .rc-badge-ev{background:rgba(64,128,224,.15);border:1px solid #4080e0;color:#4080e0}
+    .rc-body{padding:20px 22px}
+    .rc-brand{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+    .rc-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;margin-bottom:12px}
+    .rc-features{display:flex;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--bs);flex-wrap:wrap}
+    .rc-feat{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
+    .rc-feat::before{content:'✓';color:var(--accent);font-size:10px}
+    .rc-foot{display:flex;justify-content:space-between;align-items:flex-end}
+    .rc-price{display:flex;flex-direction:column}
+    .rc-price-day{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);line-height:1}
+    .rc-price-day small{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted)}
+    .rc-price-hr{font-size:12px;color:var(--muted);margin-top:2px}
+    .btn-rent-now{background:transparent;border:1px solid var(--border);color:var(--white);padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:border-color .3s,background .3s,color .3s}
+    .btn-rent-now:hover{border-color:var(--accent);background:var(--accent);color:#fff}
+
+    /* HOW RENTAL WORKS */
+    .how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--border)}
+    .how-item{background:var(--bg);padding:44px 32px;transition:background .3s;text-align:center}
+    .how-item:hover{background:#090b0d}
+    .how-step{width:60px;height:60px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 22px;font-size:22px;transition:border-color .3s}
+    .how-item:hover .how-step{border-color:var(--accent)}
+    .how-title{font-size:15px;font-weight:500;margin-bottom:10px}
+    .how-desc{font-size:13px;line-height:1.75;color:var(--muted)}
+
+    /* PRICING TABLE */
+    .pricing-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border)}
+    .pricing-card{background:var(--surface);padding:44px 36px;position:relative;transition:background .3s}
+    .pricing-card:hover{background:#141618}
+    .pricing-card.featured{background:rgba(42,170,106,.06);border:1px solid rgba(42,170,106,.3)}
+    .pc-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:5px 16px;white-space:nowrap}
+    .pc-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;margin-bottom:6px}
+    .pc-sub{font-size:12px;color:var(--muted);margin-bottom:24px}
+    .pc-price{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--accent);line-height:1;margin-bottom:4px}
+    .pc-price span{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--muted);font-weight:300}
+    .pc-period{font-size:12px;color:var(--muted);margin-bottom:28px}
+    .pc-features{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+    .pc-features li{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
+    .pc-features li::before{content:'✓';color:var(--accent);font-size:12px;flex-shrink:0}
+    .pc-features li.no{color:#3a3f46}
+    .pc-features li.no::before{content:'✗';color:#3a3f46}
+    .btn-plan{width:100%;padding:14px;font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.3s}
+    .btn-plan-outline{background:transparent;border:1px solid var(--border);color:var(--white)}.btn-plan-outline:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-plan-fill{background:var(--accent);border:none;color:#fff}.btn-plan-fill:hover{background:#1e8a54}
+
+    /* FEATURES GRID */
+    .feat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--border)}
+    .feat-item{background:var(--surface);padding:36px 30px;transition:background .3s}
+    .feat-item:hover{background:#141618}
+    .feat-icon{font-size:28px;margin-bottom:16px}
+    .feat-title{font-size:14px;font-weight:500;margin-bottom:8px}
+    .feat-desc{font-size:12px;line-height:1.7;color:var(--muted)}
+
+    /* CTA */
+    .cta-band{background:var(--accent);padding:80px 60px;display:flex;justify-content:space-between;align-items:center}
+    .cta-band h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,60px);color:#fff;line-height:1}
+    .cta-band p{font-size:14px;color:rgba(255,255,255,.65);margin-top:8px}
+    .btn-dark{background:#06080a;color:#fff;border:none;padding:16px 44px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block;transition:background .3s}
+    .btn-dark:hover{background:#111}
+
+    /* FOOTER */
+    footer{border-top:1px solid var(--border)}
+    .foot-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:60px;padding:70px 60px}
+    .foot-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--white);display:block;margin-bottom:14px}
+    .foot-logo span{color:#e83a3a}
+    .foot-desc{font-size:13px;line-height:1.75;color:var(--muted);max-width:260px}
+    .foot-col h5{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--white);margin-bottom:18px}
+    .foot-col ul{list-style:none}
+    .foot-col li+li{margin-top:10px}
+    .foot-col a{color:var(--muted);text-decoration:none;font-size:13px;transition:color .3s}
+    .foot-col a:hover{color:var(--accent)}
+    .foot-bottom{display:flex;justify-content:space-between;align-items:center;padding:22px 60px;border-top:1px solid var(--border)}
+    .foot-bottom p{font-size:11px;color:var(--muted)}
+
+    /* REVEAL */
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+    .reveal.on{opacity:1;transform:none}
+
+    @media(max-width:1100px){nav,.page-hero,.sec,.cta-band{padding-left:32px;padding-right:32px}.foot-top,.foot-bottom{padding-left:32px;padding-right:32px}.hero-inner{grid-template-columns:1fr;gap:40px}.rent-grid{grid-template-columns:1fr 1fr}.how-grid{grid-template-columns:1fr 1fr}.feat-grid{grid-template-columns:1fr 1fr}.pricing-wrap{grid-template-columns:1fr}.foot-top{grid-template-columns:1fr 1fr}.bb-row{grid-template-columns:1fr 1fr}}
+    @media(max-width:640px){nav{padding:16px 24px}.nav-links,.nav-actions{display:none}.page-hero{padding:110px 24px 0}.sec{padding:70px 24px}.bb-fields,.bb-row{grid-template-columns:1fr}.rent-grid,.how-grid,.feat-grid{grid-template-columns:1fr}.sstat{padding:18px 24px}.cta-band{flex-direction:column;gap:28px;padding:60px 24px}.foot-top{grid-template-columns:1fr;padding:50px 24px;gap:36px}.foot-bottom{flex-direction:column;gap:10px;padding:20px 24px;text-align:center}}
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">AUTO<span>VAULT</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="buy.html">Buy</a></li>
+    <li><a href="sell.html">Sell</a></li>
+    <li><a href="rent.html" class="active">Rent</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="rent.html" class="btn-nav btn-rent">Rent a Car</a>
+    <a href="buy.html" class="btn-nav btn-buy">Buy a Car</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="page-hero">
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div>
+      <p class="breadcrumb">Home &nbsp;/&nbsp; <span>Rent a Car</span></p>
+      <h1 class="page-title">RENT ANY<br>CAR,<br><span>ANYWHERE.</span></h1>
+      <p class="page-sub">From daily commutes to weekend getaways — choose from 2,000+ cars across India. Delivered to your doorstep, fuelled and ready.</p>
+      <div class="hero-tags">
+        <div class="tag">Self-Drive</div>
+        <div class="tag">With Driver</div>
+        <div class="tag">Hourly</div>
+        <div class="tag">Daily</div>
+        <div class="tag">Weekly</div>
+        <div class="tag">Monthly</div>
+      </div>
+    </div>
+
+    <!-- Hero Car Visual -->
+    <div class="hero-visual">
+      <svg viewBox="0 0 500 240" xmlns="http://www.w3.org/2000/svg">
+        <!-- Road -->
+        <rect x="0" y="195" width="500" height="45" fill="#0d1010"/>
+        <line x1="0" y1="218" x2="500" y2="218" stroke="rgba(42,170,106,0.15)" stroke-width="1"/>
+        <!-- Road dashes -->
+        <rect x="40" y="215" width="40" height="4" rx="2" fill="rgba(42,170,106,0.25)"/>
+        <rect x="130" y="215" width="40" height="4" rx="2" fill="rgba(42,170,106,0.25)"/>
+        <rect x="220" y="215" width="40" height="4" rx="2" fill="rgba(42,170,106,0.25)"/>
+        <rect x="310" y="215" width="40" height="4" rx="2" fill="rgba(42,170,106,0.25)"/>
+        <rect x="400" y="215" width="40" height="4" rx="2" fill="rgba(42,170,106,0.25)"/>
+        <!-- Shadow -->
+        <ellipse cx="252" cy="197" rx="210" ry="8" fill="rgba(42,170,106,0.07)"/>
+        <!-- Car body -->
+        <path d="M38 155 Q62 155 80 141 Q118 104 182 90 Q236 76 298 74 Q360 72 404 82 Q446 92 470 114 Q484 126 488 144 L492 155 Q480 155 470 155" fill="#0e1a12" stroke="#2aaa6a" stroke-width="1.4"/>
+        <!-- Roof -->
+        <path d="M176 141 Q196 96 244 84 Q286 72 332 72 Q378 73 406 85 Q432 97 446 120 Q453 133 452 141" fill="#0a1410" stroke="#2aaa6a" stroke-width="1.2"/>
+        <!-- Windshield -->
+        <path d="M200 137 Q216 98 256 86 Q292 76 328 76 Q364 77 390 89 Q413 100 422 124" fill="rgba(42,170,106,0.06)" stroke="rgba(42,170,106,0.3)" stroke-width="0.9"/>
+        <!-- Front wheel arch -->
+        <path d="M62 155 Q96 120 140 120 Q184 120 202 155" fill="#080e0a" stroke="#2aaa6a" stroke-width="1.4"/>
+        <!-- Rear wheel arch -->
+        <path d="M378 155 Q412 120 456 120 Q490 120 500 155" fill="#080e0a" stroke="#2aaa6a" stroke-width="1.4"/>
+        <!-- Front wheel -->
+        <circle cx="132" cy="167" r="27" fill="#0a100c" stroke="#2aaa6a" stroke-width="1.4"/>
+        <circle cx="132" cy="167" r="17" fill="#101810" stroke="rgba(42,170,106,.5)" stroke-width="1"/>
+        <line x1="132" y1="150" x2="132" y2="184" stroke="rgba(42,170,106,.35)" stroke-width="0.9"/>
+        <line x1="115" y1="167" x2="149" y2="167" stroke="rgba(42,170,106,.35)" stroke-width="0.9"/>
+        <circle cx="132" cy="167" r="5" fill="#2aaa6a"/>
+        <!-- Rear wheel -->
+        <circle cx="466" cy="167" r="27" fill="#0a100c" stroke="#2aaa6a" stroke-width="1.4"/>
+        <circle cx="466" cy="167" r="17" fill="#101810" stroke="rgba(42,170,106,.5)" stroke-width="1"/>
+        <line x1="466" y1="150" x2="466" y2="184" stroke="rgba(42,170,106,.35)" stroke-width="0.9"/>
+        <line x1="449" y1="167" x2="483" y2="167" stroke="rgba(42,170,106,.35)" stroke-width="0.9"/>
+        <circle cx="466" cy="167" r="5" fill="#2aaa6a"/>
+        <!-- Headlight -->
+        <path d="M38 143 Q40 133 51 129 Q61 125 67 133 Q62 143 56 146Z" fill="rgba(200,255,220,.85)"/>
+        <!-- Taillight -->
+        <path d="M489 141 Q495 135 497 143 L495 151 Q489 153 487 147Z" fill="rgba(232,80,60,.85)"/>
+        <!-- Door line -->
+        <path d="M234 139 Q300 135 365 137" fill="none" stroke="rgba(42,170,106,.22)" stroke-width="0.8"/>
+        <!-- Speed lines -->
+        <line x1="0" y1="158" x2="30" y2="158" stroke="rgba(42,170,106,.18)" stroke-width="1.5"/>
+        <line x1="0" y1="168" x2="20" y2="168" stroke="rgba(42,170,106,.12)" stroke-width="1"/>
+        <line x1="0" y1="145" x2="18" y2="145" stroke="rgba(42,170,106,.1)" stroke-width="1"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Booking Bar -->
+  <div class="booking-bar" style="margin-top:40px">
+    <div class="bb-title">🔑 Quick Book</div>
+    <div class="bb-fields">
+      <div class="bb-field"><label>Pickup City</label><input type="text" placeholder="e.g. Mumbai"/></div>
+      <div class="bb-field"><label>Pickup Date & Time</label><input type="datetime-local"/></div>
+      <div class="bb-field"><label>Return Date & Time</label><input type="datetime-local"/></div>
+    </div>
+    <div class="bb-row">
+      <div class="bb-field"><label>Car Type</label><select><option>Any Type</option><option>Hatchback</option><option>Sedan</option><option>SUV</option><option>Luxury</option><option>Electric</option><option>Van / MUV</option></select></div>
+      <div class="bb-field"><label>Drive Type</label><select><option>Self-Drive</option><option>With Driver</option></select></div>
+      <div class="bb-field"><label>Fuel Preference</label><select><option>Any</option><option>Petrol</option><option>Diesel</option><option>Electric</option><option>CNG</option></select></div>
+      <div class="bb-field"><label>Promo Code</label><input type="text" placeholder="Optional"/></div>
+      <button class="btn-search">Search →</button>
+    </div>
+  </div>
+</section>
+
+<!-- STATS STRIP -->
+<div class="stats-strip reveal">
+  <div class="sstat"><div class="sstat-icon">🚗</div><div><div class="sstat-n">2,000+</div><div class="sstat-l">Cars Available</div></div></div>
+  <div class="sstat"><div class="sstat-icon">📍</div><div><div class="sstat-n">40+</div><div class="sstat-l">Cities</div></div></div>
+  <div class="sstat"><div class="sstat-icon">⭐</div><div><div class="sstat-n">4.9 / 5</div><div class="sstat-l">Avg Rating</div></div></div>
+  <div class="sstat"><div class="sstat-icon">🛡️</div><div><div class="sstat-n">100%</div><div class="sstat-l">Insured Rides</div></div></div>
+</div>
+
+<!-- FLEET -->
+<section class="sec">
+  <div class="sec-head reveal">
+    <div><p class="eyebrow">Our Fleet</p><h2 class="sec-title">Cars for Every Occasion</h2></div>
+  </div>
+
+  <!-- Category Tabs -->
+  <div class="cat-tabs reveal">
+    <button class="cat-tab active" onclick="filterCars('all',this)">All Cars</button>
+    <button class="cat-tab" onclick="filterCars('budget',this)">Budget</button>
+    <button class="cat-tab" onclick="filterCars('suv',this)">SUV</button>
+    <button class="cat-tab" onclick="filterCars('luxury',this)">Luxury</button>
+    <button class="cat-tab" onclick="filterCars('ev',this)">Electric</button>
+  </div>
+
+  <div class="rent-grid reveal" id="rentGrid">
+
+    <!-- Budget -->
+    <div class="rent-card" data-cat="budget">
+      <div class="rc-img" style="background:linear-gradient(160deg,#0a100c,#141a10)">
+        <div class="rc-badge rc-badge-budget">Budget</div>
+        <svg viewBox="0 0 380 160" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 110 Q32 110 48 98 Q78 72 128 62 Q168 52 216 50 Q264 48 300 58 Q334 66 354 84 Q366 94 370 108" fill="#0a1208" stroke="#2aaa6a" stroke-width="1.2"/>
+          <path d="M122 98 Q140 62 180 52 Q214 44 248 44 Q282 44 304 56 Q324 66 330 88" fill="#081008" stroke="#2aaa6a" stroke-width="1"/>
+          <path d="M32 98 Q56 78 88 78 Q120 78 134 110" fill="#060e06" stroke="#2aaa6a" stroke-width="1.2"/>
+          <path d="M266 110 Q286 78 316 78 Q344 78 358 110" fill="#060e06" stroke="#2aaa6a" stroke-width="1.2"/>
+          <circle cx="84" cy="118" r="22" fill="#0a100a" stroke="#2aaa6a" stroke-width="1.2"/><circle cx="84" cy="118" r="13" fill="#101810" stroke="rgba(42,170,106,.4)" stroke-width="0.8"/><circle cx="84" cy="118" r="4" fill="#2aaa6a"/>
+          <circle cx="326" cy="118" r="22" fill="#0a100a" stroke="#2aaa6a" stroke-width="1.2"/><circle cx="326" cy="118" r="13" fill="#101810" stroke="rgba(42,170,106,.4)" stroke-width="0.8"/><circle cx="326" cy="118" r="4" fill="#2aaa6a"/>
+        </svg>
+      </div>
+      <div class="rc-body">
+        <div class="rc-brand">Maruti Suzuki</div>
+        <div class="rc-name">Swift — Petrol Manual</div>
+        <div class="rc-features">
+          <span class="rc-feat">5 Seats</span><span class="rc-feat">AC</span><span class="rc-feat">Bluetooth</span><span class="rc-feat">Self-Drive</span>
+        </div>
+        <div class="rc-foot">
+          <div class="rc-price"><div class="rc-price-day">₹899 <small>/day</small></div><div class="rc-price-hr">₹120/hr · ₹5,500/week</div></div>
+          <button class="btn-rent-now">Book Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Budget -->
+    <div class="rent-card" data-cat="budget">
+      <div class="rc-img" style="background:linear-gradient(160deg,#080e10,#101618)">
+        <div class="rc-badge rc-badge-budget">Budget</div>
+        <svg viewBox="0 0 380 160" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 112 Q32 112 48 100 Q80 74 130 62 Q170 52 218 50 Q268 48 304 58 Q338 68 358 86 Q370 97 372 110" fill="#0a1018" stroke="#4080e0" stroke-width="1.2"/>
+          <path d="M124 100 Q142 63 183 52 Q218 43 252 43 Q288 43 310 56 Q330 67 336 90" fill="#08101a" stroke="#4080e0" stroke-width="1"/>
+          <path d="M33 100 Q57 79 90 79 Q122 79 136 112" fill="#060810" stroke="#4080e0" stroke-width="1.2"/>
+          <path d="M268 112 Q288 79 320 79 Q350 79 364 112" fill="#060810" stroke="#4080e0" stroke-width="1.2"/>
+          <circle cx="86" cy="120" r="22" fill="#0a0c14" stroke="#4080e0" stroke-width="1.2"/><circle cx="86" cy="120" r="13" fill="#0e1018" stroke="rgba(64,128,224,.4)" stroke-width="0.8"/><circle cx="86" cy="120" r="4" fill="#4080e0"/>
+          <circle cx="330" cy="120" r="22" fill="#0a0c14" stroke="#4080e0" stroke-width="1.2"/><circle cx="330" cy="120" r="13" fill="#0e1018" stroke="rgba(64,128,224,.4)" stroke-width="0.8"/><circle cx="330" cy="120" r="4" fill="#4080e0"/>
+        </svg>
+      </div>
+      <div class="rc-body">
+        <div class="rc-brand">Hyundai</div>
+        <div class="rc-name">i20 Sportz — Auto</div>
+        <div class="rc-features">
+          <span class="rc-feat">5 Seats</span><span class="rc-feat">AC</span><span class="rc-feat">Sunroof</span><span class="rc-feat">Self-Drive</span>
+        </div>
+        <div class="rc-foot">
+          <div class="rc-price"><div class="rc-price-day">₹1,099 <small>/day</small></div><div class="rc-price-hr">₹150/hr · ₹6,500/week</div></div>
+          <button class="btn-rent-now">Book Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUV -->
+    <div class="rent-card" data-cat="suv">
+      <div class="rc-img" style="background:linear-gradient(160deg,#14100a,#1c1810)">
+        <div class="rc-badge rc-badge-suv">SUV</div>
+        <svg viewBox="0 0 380 160" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 116 Q34 116 50 104 Q76 82 124 68 Q164 56 216 54 Q268 52 308 62 Q344 70 366 88 Q378 98 380 114" fill="#181410" stroke="#a07848" stroke-width="1.2"/>
+          <path d="M120 104 Q130 62 184 52 Q222 45 260 45 Q298 46 320 58 Q340 70 344 94" fill="#120e0a" stroke="#a07848" stroke-width="1"/>
+          <path d="M36 104 Q60 82 96 82 Q132 82 148 116" fill="#0a0806" stroke="#a07848" stroke-width="1.2"/>
+          <path d="M276 116 Q298 82 330 82 Q360 82 374 116" fill="#0a0806" stroke="#a07848" stroke-width="1.2"/>
+          <circle cx="90" cy="124" r="24" fill="#0e0a08" stroke="#a07848" stroke-width="1.2"/><circle cx="90" cy="124" r="15" fill="#141008" stroke="rgba(160,120,72,.45)" stroke-width="0.8"/><circle cx="90" cy="124" r="5" fill="#a07848"/>
+          <circle cx="338" cy="124" r="24" fill="#0e0a08" stroke="#a07848" stroke-width="1.2"/><circle cx="338" cy="124" r="15" fill="#141008" stroke="rgba(160,120,72,.45)" stroke-width="0.8"/><circle cx="338" cy="124" r="5" fill="#a07848"/>
+          <line x1="122" y1="50" x2="314" y2="54" stroke="rgba(160,120,72,.18)" stroke-width="0.9"/>
+        </svg>
+      </div>
+      <div class="rc-body">
+        <div class="rc-brand">Toyota</div>
+        <div class="rc-name">Fortuner 4x4 — Diesel</div>
+        <div class="rc-features">
+          <span class="rc-feat">7 Seats</span><span class="rc-feat">4WD</span><span class="rc-feat">GPS</span><span class="rc-feat">Driver Available</span>
+        </div>
+        <div class="rc-foot">
+          <div class="rc-price"><div class="rc-price-day">₹3,800 <small>/day</small></div><div class="rc-price-hr">₹450/hr · ₹24,000/week</div></div>
+          <button class="btn-rent-now">Book Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUV -->
+    <div class="rent-card" data-cat="suv">
+      <div class="rc-img" style="background:linear-gradient(160deg,#101408,#181c10)">
+        <div class="rc-badge rc-badge-suv">SUV</div>
+        <svg viewBox="0 0 380 160" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 116 Q34 116 50 104 Q76 82 124 68 Q164 56 216 54 Q268 52 308 62 Q344 70 366 88 Q378 98 380 114" fill="#121808" stroke="#3aaa6a" stroke-width="1.2"/>
+          <path d="M120 104 Q130 62 184 52 Q222 45 260 45 Q298 46 320 58 Q340 70 344 94" fill="#0e1408" stroke="#3aaa6a" stroke-width="1"/>
+          <path d="M36 104 Q60 82 96 82 Q132 82 148 116" fill="#081008" stroke="#3aaa6a" stroke-width="1.2"/>
+          <path d="M276 116 Q298 82 330 82 Q360 82 374 116" fill="#081008" stroke="#3aaa6a" stroke-width="1.2"/>
+          <circle cx="90" cy="124" r="24" fill="#0a100a" stroke="#3aaa6a" stroke-width="1.2"/><circle cx="90" cy="124" r="15" fill="#101a10" stroke="rgba(58,170,106,.45)" stroke-width="0.8"/><circle cx="90" cy="124" r="5" fill="#3aaa6a"/>
+          <circle cx="338" cy="124" r="24" fill="#0a100a" stroke="#3aaa6a" stroke-width="1.2"/><circle cx="338" cy="124" r="15" fill="#101a10" stroke="rgba(58,170,106,.45)" stroke-width="0.8"/><circle cx="338" cy="124" r="5" fill="#3aaa6a"/>
+        </svg>
+      </div>
+      <div class="rc-body">
+        <div class="rc-brand">Mahindra</div>
+        <div class="rc-name">Scorpio-N Z8 — Diesel</div>
+        <div class="rc-features">
+          <span class="rc-feat">7 Seats</span><span class="rc-feat">AC</span><span class="rc-feat">Self-Drive</span><span class="rc-feat">GPS</span>
+        </div>
+        <div class="rc-foot">
+          <div class="rc-price"><div class="rc-price-day">₹2,600 <small>/day</small></div><div class="rc-price-hr">₹320/hr · ₹16,000/week</div></div>
+          <button class="btn-rent-now">Book Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Luxury -->
+    <div class="rent-card" data-cat="luxury">
+      <div class="rc-img" style="background:linear-gradient(160deg,#161410,#201e18)">
+        <div class="rc-badge rc-badge-luxury">Luxury</div>
+        <svg viewBox="0 0 380 160" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 112 Q32 112 48 100 Q78 72 128 60 Q168 48 216 46 Q264 44 300 54 Q334 62 354 80 Q366 91 370 108" fill="#1c1810" stroke="#c9a84c" stroke-width="1.3"/>
+          <path d="M122 100 Q140 62 180 52 Q214 43 248 43 Q282 43 304 56 Q324 67 330 88" fill="#130f08" stroke="#c9a84c" stroke-width="1.1"/>
+          <path d="M32 100 Q56 78 88 78 Q120 78 134 112" fill="#0a0808" stroke="#c9a84c" stroke-width="1.3"/>
+          <path d="M266 112 Q286 78 316 78 Q344 78 358 112" fill="#0a0808" stroke="#c9a84c" stroke-width="1.3"/>
+          <circle cx="84" cy="120" r="24" fill="#0e0c0a" stroke="#c9a84c" stroke-width="1.3"/><circle cx="84" cy="120" r="15" fill="#161310" stroke="rgba(201,168,76,.5)" stroke-width="0.9"/><circle cx="84" cy="120" r="5" fill="#c9a84c"/>
+          <circle cx="326" cy="120" r="24" fill="#0e0c0a" stroke="#c9a84c" stroke-width="1.3"/><circle cx="326" cy="120" r="15" fill="#161310" stroke="rgba(201,168,76,.5)" stroke-width="0.9"/><circle cx="326" cy="120" r="5" fill="#c9a84c"/>
+          <path d="M14 98 Q16 88 27 84 Q37 80 43 88Z" fill="rgba(220,195,130,.9)"/>
+        </svg>
+      </div>
+      <div class="rc-body">
+        <div class="rc-brand">Mercedes-Benz</div>
+        <div class="rc-name">E-Class E220d — Auto</div>
+        <div class="rc-features">
+          <span class="rc-feat">5 Seats</span><span class="rc-feat">Chauffeur</span><span class="rc-feat">Leather</span><span class="rc-feat">Minibar</span>
+        </div>
+        <div class="rc-foot">
+          <div class="rc-price"><div class="rc-price-day">₹8,500 <small>/day</small></div><div class="rc-price-hr">₹1,100/hr · ₹55,000/week</div></div>
+          <button class="btn-rent-now">Book Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EV -->
+    <div class="rent-card" data-cat="ev">
+      <div class="rc-img" style="background:linear-gradient(160deg,#0a1018,#101820)">
+        <div class="rc-badge rc-badge-ev">⚡ EV</div>
+        <svg viewBox="0 0 380 160" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 112 Q32 112 48 100 Q78 72 128 60 Q168 48 218 46 Q268 44 304 54 Q338 64 358 82 Q370 93 372 110" fill="#0a1418" stroke="#4080e0" stroke-width="1.2"/>
+          <path d="M122 100 Q140 62 182 52 Q218 43 253 43 Q288 43 310 56 Q330 67 336 90" fill="#080e16" stroke="#4080e0" stroke-width="1"/>
+          <path d="M32 100 Q56 78 90 78 Q122 78 136 112" fill="#060810" stroke="#4080e0" stroke-width="1.2"/>
+          <path d="M268 112 Q288 78 320 78 Q350 78 364 112" fill="#060810" stroke="#4080e0" stroke-width="1.2"/>
+          <circle cx="86" cy="120" r="22" fill="#0a0c14" stroke="#4080e0" stroke-width="1.2"/><circle cx="86" cy="120" r="13" fill="#0e1018" stroke="rgba(64,128,224,.4)" stroke-width="0.8"/><circle cx="86" cy="120" r="4" fill="#4080e0"/>
+          <circle cx="330" cy="120" r="22" fill="#0a0c14" stroke="#4080e0" stroke-width="1.2"/><circle cx="330" cy="120" r="13" fill="#0e1018" stroke="rgba(64,128,224,.4)" stroke-width="0.8"/><circle cx="330" cy="120" r="4" fill="#4080e0"/>
+          <path d="M196 22 L187 37 L195 37 L185 55 L201 38 L193 38 Z" fill="rgba(64,128,224,0.3)" stroke="rgba(64,128,224,0.5)" stroke-width="0.6"/>
+        </svg>
+      </div>
+      <div class="rc-body">
+        <div class="rc-brand">Tata</div>
+        <div class="rc-name">Nexon EV Max — Auto</div>
+        <div class="rc-features">
+          <span class="rc-feat">5 Seats</span><span class="rc-feat">437km Range</span><span class="rc-feat">Self-Drive</span><span class="rc-feat">Fast Charge</span>
+        </div>
+        <div class="rc-foot">
+          <div class="rc-price"><div class="rc-price-day">₹1,999 <small>/day</small></div><div class="rc-price-hr">₹260/hr · ₹12,000/week</div></div>
+          <button class="btn-rent-now">Book Now</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="sec sec-alt">
+  <div class="sec-head reveal"><div><p class="eyebrow">Rent in Minutes</p><h2 class="sec-title">How It Works</h2></div></div>
+  <div class="how-grid reveal">
+    <div class="how-item"><div class="how-step">🔍</div><div class="how-title">Choose Your Car</div><p class="how-desc">Browse our fleet by type, budget, or city. Filter by self-drive or with driver — your choice.</p></div>
+    <div class="how-item"><div class="how-step">📅</div><div class="how-title">Pick Dates & Times</div><p class="how-desc">Select your pickup date, time, and duration. Hourly, daily, weekly, or monthly plans available.</p></div>
+    <div class="how-item"><div class="how-step">✅</div><div class="how-title">Instant Confirmation</div><p class="how-desc">Book and pay securely online. Get instant confirmation and your driver's details via SMS and email.</p></div>
+    <div class="how-item"><div class="how-step">🚗</div><div class="how-title">Drive Away</div><p class="how-desc">Car delivered to your doorstep fuelled and cleaned. Return it at the same location or drop-off point.</p></div>
+  </div>
+</section>
+
+<!-- PRICING PLANS -->
+<section class="sec">
+  <div class="sec-head reveal"><div><p class="eyebrow">Rental Plans</p><h2 class="sec-title">Simple, Transparent Pricing</h2></div></div>
+  <div class="pricing-wrap reveal">
+    <div class="pricing-card">
+      <div class="pc-name">Hourly</div>
+      <div class="pc-sub">Perfect for short trips and errands</div>
+      <div class="pc-price">₹120<span>/hr</span></div>
+      <div class="pc-period">Minimum 2 hours • Hatchbacks</div>
+      <ul class="pc-features">
+        <li>Fuel included (50 km free)</li>
+        <li>Basic insurance covered</li>
+        <li>24/7 roadside assistance</li>
+        <li>Self-drive & chauffeur options</li>
+        <li class="no">Free home delivery</li>
+        <li class="no">Priority customer support</li>
+      </ul>
+      <button class="btn-plan btn-plan-outline">Book Hourly</button>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pc-badge">Most Popular</div>
+      <div class="pc-name">Daily</div>
+      <div class="pc-sub">Great for day trips and outstation</div>
+      <div class="pc-price">₹899<span>/day</span></div>
+      <div class="pc-period">24-hour rental • Hatchbacks from</div>
+      <ul class="pc-features">
+        <li>300 km included per day</li>
+        <li>Comprehensive insurance</li>
+        <li>24/7 roadside assistance</li>
+        <li>Self-drive & chauffeur options</li>
+        <li>Free home delivery</li>
+        <li>Priority customer support</li>
+      </ul>
+      <button class="btn-plan btn-plan-fill">Book Daily</button>
+    </div>
+    <div class="pricing-card">
+      <div class="pc-name">Monthly</div>
+      <div class="pc-sub">Best value for long-term needs</div>
+      <div class="pc-price">₹18,000<span>/mo</span></div>
+      <div class="pc-period">30-day rental • Hatchbacks from</div>
+      <ul class="pc-features">
+        <li>Unlimited km included</li>
+        <li>Comprehensive insurance</li>
+        <li>24/7 roadside assistance</li>
+        <li>Self-drive & chauffeur options</li>
+        <li>Free home delivery & pickup</li>
+        <li>Dedicated account manager</li>
+      </ul>
+      <button class="btn-plan btn-plan-outline">Book Monthly</button>
+    </div>
+  </div>
+</section>
+
+<!-- WHY RENT WITH US -->
+<section class="sec sec-alt">
+  <div class="sec-head reveal"><div><p class="eyebrow">Our Advantage</p><h2 class="sec-title">Why Rent With AutoVault</h2></div></div>
+  <div class="feat-grid reveal">
+    <div class="feat-item"><div class="feat-icon">🚪</div><div class="feat-title">Doorstep Delivery</div><p class="feat-desc">Car delivered to your home, office, or hotel — fuelled up, cleaned, and ready to go.</p></div>
+    <div class="feat-item"><div class="feat-icon">🛡️</div><div class="feat-title">Fully Insured</div><p class="feat-desc">Every rental includes comprehensive insurance. Drive with complete peace of mind.</p></div>
+    <div class="feat-item"><div class="feat-icon">🔧</div><div class="feat-title">24/7 Roadside Help</div><p class="feat-desc">Flat tyre or breakdown? Our team reaches you anywhere in the city within 30 minutes.</p></div>
+    <div class="feat-item"><div class="feat-icon">📱</div><div class="feat-title">Easy App Booking</div><p class="feat-desc">Book, modify, or extend your rental in seconds via our app or website — no calls needed.</p></div>
+    <div class="feat-item"><div class="feat-icon">💳</div><div class="feat-title">No Hidden Charges</div><p class="feat-desc">The price you see is what you pay. Fuel, tolls, and parking are clearly communicated upfront.</p></div>
+    <div class="feat-item"><div class="feat-icon">🏆</div><div class="feat-title">Top-Rated Fleet</div><p class="feat-desc">All cars are less than 3 years old, regularly serviced, and deep-cleaned after every rental.</p></div>
+    <div class="feat-item"><div class="feat-icon">🔄</div><div class="feat-title">Flexible Extensions</div><p class="feat-desc">Need the car longer? Extend your booking any time via the app with instant confirmation.</p></div>
+    <div class="feat-item"><div class="feat-icon">📍</div><div class="feat-title">40+ Cities</div><p class="feat-desc">Rent in Mumbai, Delhi, Bengaluru, Hyderabad, Pune, Chennai and 34 more cities across India.</p></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-band reveal">
+  <div><h2>READY TO HIT THE ROAD?</h2><p>Book your car in under 2 minutes. No deposits, no drama.</p></div>
+  <a href="#" class="btn-dark">Browse All Cars →</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-top">
+    <div><span class="foot-logo">AUTO<span>VAULT</span></span><p class="foot-desc">India's most trusted platform to buy, sell, and rent cars. Transparent, fast, and 100% hassle-free.</p></div>
+    <div class="foot-col"><h5>Explore</h5><ul><li><a href="buy.html">Buy a Car</a></li><li><a href="sell.html">Sell Your Car</a></li><li><a href="rent.html">Rent a Car</a></li><li><a href="#">Car Loans</a></li><li><a href="#">Insurance</a></li></ul></div>
+    <div class="foot-col"><h5>Company</h5><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="#">Careers</a></li><li><a href="#">Blog</a></li><li><a href="#">Press</a></li></ul></div>
+    <div class="foot-col"><h5>Support</h5><ul><li><a href="#">Help Centre</a></li><li><a href="#">Fuel Policy</a></li><li><a href="#">Cancellation</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><p>© 2025 AutoVault India Pvt. Ltd. All rights reserved.</p><p>Made with ♥ in India</p></div>
+</footer>
+
+<script>
+  // Category filter
+  function filterCars(cat, btn){
+    document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.rent-card').forEach(card=>{
+      if(cat==='all'||card.dataset.cat===cat){
+        card.style.display='block';
+      } else {
+        card.style.display='none';
+      }
+    });
+  }
+
+  // Reveal
+  const io=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('on'),i*90);io.unobserve(e.target);}});},{threshold:.08});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
